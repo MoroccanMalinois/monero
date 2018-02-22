@@ -16,7 +16,9 @@ RUN apt-get update && \
         curl \
         libtool-bin \
         autoconf \
-        automake
+        automake \
+        libusb-1.0-0-dev \
+        flex
 
 WORKDIR /usr/local
 
@@ -85,6 +87,17 @@ RUN git clone https://github.com/jedisct1/libsodium.git -b ${SODIUM_VERSION} \
     && make \
     && make check \
     && make install
+
+# PCSC
+ARG PCSC_VERSION=1.8.23
+ARG PCSC_HASH=09f0f85b86e7488cf26642dd17150f76bed5300c
+RUN git clone git://anonscm.debian.org/pcsclite/PCSC.git -b pcsc-${PCSC_VERSION} \
+  && cd PCSC \
+  && test `git rev-parse HEAD` = ${PCSC_HASH} || exit 1 \
+  && ./bootstrap \
+  && CFLAGS="-fPIC" CPPFLAGS="-fPIC" ./configure --disable-libsystemd --enable-static  --disable-shared --disable-libudev \
+  && make \
+  && make install
 
 WORKDIR /src
 COPY . .
